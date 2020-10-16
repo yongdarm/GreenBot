@@ -17,40 +17,38 @@ function CreateMessageEmbed() {
         .setFooter("Made By green1052#2793", "https://cdn.discordapp.com/avatars/368688044934561792/638749733d2d73f23cf12db43e62d33a.webp?size=256");
 }
 
-function SendErrorMessage(message, command, error) {
+async function SendErrorMessage(message, command, error) {
     const embed = CreateMessageEmbed()
         .setTitle(":warning: 오류!")
         .setDescription(`오류가 발생해 명령어 ${command}이(가) 중단됐습니다. 사유: ${error}`);
 
-    message.channel.send(embed);
+    await message.channel.send(embed);
 
     console.log(`오류가 발생해 명령어 ${command}이(가) 중단됐습니다. 사유: ${error}`);
 }
 
-function SendNeedSomeArgs(message, command, needArgs) {
+async function SendNeedSomeArgs(message, command, needArgs) {
     const embed = CreateMessageEmbed()
         .setTitle("인수가 부족합니다.")
         .addField("사용법", `${prefix}${command} ${needArgs}`);
 
-    message.channel.send(embed);
+    await message.channel.send(embed);
 }
 
-function GetDiscordUser(message, allArgs) {
-    return new Promise(function (resolve, reject) {
-        if (message.mentions.users.first())
-            return resolve(message.mentions.users.first());
+async function GetDiscordUser(message, allArgs) {
+    if (message.mentions.users.first())
+        return message.mentions.users.first();
 
-        const tempAllArgs = allArgs.toLowerCase();
+    const tempAllArgs = allArgs.toLowerCase();
 
-        message.guild.members.fetch().then(members => {
-            members.forEach(member => {
-                if (member.user.id.includes(tempAllArgs) || member.user.username.toLowerCase().includes(tempAllArgs) || member.nickname !== null && member.nickname.toLowerCase().includes(tempAllArgs))
-                    return resolve(message.guild.member(member));
-            });
-        }).finally(() => {
-            reject("유저를 찾지 못했습니다.");
-        });
+    const members = await message.guild.members.fetch();
+
+    members.forEach(member => {
+        if (member.user.id.includes(tempAllArgs) || member.user.username.toLowerCase().includes(tempAllArgs) || member.nickname !== null && member.nickname.toLowerCase().includes(tempAllArgs))
+            return message.guild.member(member);
     });
+
+    throw Error("유저를 찾지 못했습니다.");
 }
 
 async function SendNekoImage(message, command) {
@@ -62,7 +60,7 @@ async function SendNekoImage(message, command) {
 
         await message.channel.send(embed);
     } catch (e) {
-        SendErrorMessage(message, command, e);
+        await SendErrorMessage(message, command, e);
     }
 }
 
@@ -91,28 +89,28 @@ function GetQuoteInContent(content) {
     return contents;
 }
 
-function GetGuildUserAndBotCount(guild) {
-    return new Promise(function (resolve) {
-        let userCount = 0;
-        let botCount = 0;
+async function GetGuildUserAndBotCount(guild) {
+    let userCount = 0;
+    let botCount = 0;
 
-        guild.members.fetch().then(members => {
-            members.forEach(member => {
-                if (guild.member(member).user.bot)
-                    botCount++;
-                else
-                    userCount++;
-            });
-        }).finally(() => resolve({userCount: userCount, botCount: botCount}));
+    const members = await guild.members.fetch();
+
+    members.forEach(member => {
+        if (guild.member(member).user.bot)
+            botCount++;
+        else
+            userCount++;
     });
+
+    return {userCount: userCount, botCount: botCount};
 }
 
 client.login(process.env.token);
 
-client.on("ready", () => {
+client.on("ready", async () => {
     console.log(`${client.user.tag}이(가) 가동됐습니다.`);
 
-    client.user.setActivity(`${prefix}도움말로 도움말 보기`, {
+    await client.user.setActivity(`${prefix}도움말로 도움말 보기`, {
         type: "PLAYING"
     });
 });
@@ -144,7 +142,7 @@ client.on("message", async message => {
                 .addField("한강", "한강 물 온도를 볼 수 있습니다.")
                 .addField("날씨 (지역)", "날씨를 볼 수 있습니다.")
                 .addField("계산 (식)", "간단한 계산을 할 수 있습니다. [사용법](https://bugwheels94.github.io/math-expression-evaluator/#supported-maths-symbols)")
-                .addField("네코 [반복]", "귀여운 고양이 소녀를 볼 수 있습니다.")
+                .addField("네코 [숫자]", "귀여운 고양이 소녀를 볼 수 있습니다.")
                 .addField(`골라 ("내용")`, "여러 단어 중 한개를 무작위로 골라줍니다.")
                 .addField(`추방 "(멘션 | ID | 이름)" "[사유]"`, "유저를 서버에서 추방할 수 있습니다.")
                 .addField(`밴 "(멘션 | ID | 이름)" "[사유]"`, "유저를 서버에서 밴할 수 있습니다.")
@@ -379,7 +377,7 @@ client.on("message", async message => {
 
             if (isNaN(args[0]))
                 return SendErrorMessage(message, command, "숫자가 아닙니다.");
-0
+            0
             if (args[0] > 100)
                 return SendErrorMessage(message, command, "100 이하의 값을 입력 해주세요");
 
@@ -394,6 +392,6 @@ client.on("message", async message => {
             }).catch(error => SendErrorMessage(message, command, error.message));
         }
     } catch (e) {
-        SendErrorMessage(message, command, e);
+        await SendErrorMessage(message, command, e);
     }
 });
