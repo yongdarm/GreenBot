@@ -59,8 +59,8 @@ function SendNekoImage(message, command) {
             .setImage(response.data.url);
 
         message.channel.send(embed);
-    }).catch(function (e) {
-        SendErrorMessage(message, command, e.message);
+    }).catch(function (error) {
+        SendErrorMessage(message, command, error.message);
     });
 }
 
@@ -153,8 +153,8 @@ client.on("message", message => {
             });
 
             message.channel.send(embed);
-        }).catch(function (e) {
-            SendErrorMessage(message, command, e.message);
+        }).catch(function (error) {
+            SendErrorMessage(message, command, error.message);
         });
     } else if (command === "유저") {
         if (!args[0])
@@ -184,7 +184,7 @@ client.on("message", message => {
             .setDescription(`${client.guilds.cache.size}개의 서버가 봇을 사용하고 있습니다.`);
 
         client.guilds.cache.forEach(guild => {
-            embed.addField(guild.name, `맴버 수: ${guild.memberCount}`, true);
+            embed.addField(guild.name, `맴버 수: ${guild.memberCount}명`, true);
         });
 
         message.channel.send(embed);
@@ -213,8 +213,8 @@ client.on("message", message => {
                 .setDescription(`${response.data.temp}°C`)
 
             message.channel.send(embed);
-        }).catch(function (e) {
-            SendErrorMessage(message, command, e.message);
+        }).catch(function (error) {
+            SendErrorMessage(message, command, error.message);
         });
     } else if (command === "날씨") {
         if (!args[0])
@@ -240,8 +240,8 @@ client.on("message", message => {
 
                 message.channel.send(embed);
             });
-        }).catch(function (e) {
-            SendErrorMessage(message, command, e.message);
+        }).catch(function (error) {
+            SendErrorMessage(message, command, error.message);
         });
     } else if (command === "계산") {
         if (!args[0])
@@ -253,8 +253,8 @@ client.on("message", message => {
                 .setDescription(math.eval(allArgs));
 
             message.channel.send(embed);
-        } catch (e) {
-            SendErrorMessage(message, command, e.message);
+        } catch (error) {
+            SendErrorMessage(message, command, error.message);
         }
     } else if (command === "네코") {
         if (args[0]) {
@@ -304,7 +304,7 @@ client.on("message", message => {
 
                 message.channel.send(embed);
             }).catch(error => {
-                SendErrorMessage(message, command, error);
+                SendErrorMessage(message, command, error.message);
             });
 
         }, function (error) {
@@ -329,10 +329,7 @@ client.on("message", message => {
                     .setDescription(`사유: ${contents[1] === null ? contents[1] : "없음"}`);
 
                 message.channel.send(embed);
-            }).catch(error => {
-                SendErrorMessage(message, command, error);
-            });
-
+            }).catch(error => SendErrorMessage(message, command, error.message));
         }, function (error) {
             SendErrorMessage(message, command, error);
         });
@@ -352,9 +349,11 @@ client.on("message", message => {
         message.delete();
 
         message.channel.bulkDelete(args[0]).then(messages => {
-            message.channel.send(CreateMessageEmbed().setTitle("삭제 완료").setDescription(`${messages.size}개의 메시지를 지웠습니다.`))
-        }).catch(error => {
-            SendErrorMessage(message, command, error);
-        });
+            const embed = CreateMessageEmbed()
+                .setTitle("삭제 완료")
+                .setDescription(`${messages.size}개의 메시지를 지웠습니다.`);
+
+            message.channel.send(embed);
+        }).catch(error => SendErrorMessage(message, command, error.message));
     }
 });
