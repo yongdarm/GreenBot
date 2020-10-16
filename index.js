@@ -9,7 +9,7 @@ const xml2js = require("xml2js");
 const mathjs = require("mathjs");
 const axios = require("axios");
 
-const prefix = "그린아 ";
+const prefix = process.env.prefix;
 
 function CreateMessageEmbed() {
     return new Discord.MessageEmbed()
@@ -108,7 +108,7 @@ async function GetGuildUserAndBotCount(guild) {
     return {userCount: userCount, botCount: botCount};
 }
 
-client.login("NzY1NDIyNzQ1NTcxMTY0MTc4.X4Ulew.ZQheZGD5i9qAZJzbIGEopUaPxco");
+client.login(process.env.token);
 
 client.on("ready", async () => {
     console.log(`${client.user.tag}이(가) 가동됐습니다.`);
