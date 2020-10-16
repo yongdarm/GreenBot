@@ -320,7 +320,7 @@ client.on("message", async message => {
             const random = Math.floor(Math.random() * contents.length);
 
             const embed = CreateMessageEmbed()
-                .setTitle(`${random}번을 선택했습니다.`)
+                .setTitle(`${random + 1}번을 선택했습니다.`)
                 .setDescription(contents[random]);
 
             message.channel.send(embed);
@@ -377,7 +377,7 @@ client.on("message", async message => {
 
             if (isNaN(args[0]))
                 return SendErrorMessage(message, command, "숫자가 아닙니다.");
-            0
+
             if (args[0] > 100)
                 return SendErrorMessage(message, command, "100 이하의 값을 입력 해주세요");
 
