@@ -9,7 +9,7 @@ const xml2js = require("xml2js");
 const mathjs = require("mathjs");
 const axios = require("axios");
 
-const prefix = process.env.prefix;
+const prefix = "그린아 ";
 
 function CreateMessageEmbed() {
     return new Discord.MessageEmbed()
@@ -65,17 +65,20 @@ async function SendNekoImage(message) {
 }
 
 function GetQuoteInContent(content) {
+    if (!content.includes('"'))
+        return null;
+
     let contents = [];
 
     let open = false;
     let string = "";
 
-    for (const i in content) {
-        if (content[i] === '"')
+    for (const contentOf of content) {
+        if (contentOf === '"')
             open = !open;
 
-        if (open && content[i] !== '"')
-            string += content[i];
+        if (open && contentOf !== '"')
+            string += contentOf;
 
         else if (string !== "") {
             contents.push(string);
@@ -105,7 +108,7 @@ async function GetGuildUserAndBotCount(guild) {
     return {userCount: userCount, botCount: botCount};
 }
 
-client.login(process.env.token);
+client.login("NzY1NDIyNzQ1NTcxMTY0MTc4.X4Ulew.ZQheZGD5i9qAZJzbIGEopUaPxco");
 
 client.on("ready", async () => {
     console.log(`${client.user.tag}이(가) 가동됐습니다.`);
@@ -312,9 +315,9 @@ client.on("message", async message => {
             if (!args[0] || !args[1])
                 return SendNeedSomeArgs(message, command, `"(단어)"`);
 
-            const contents = GetQuoteInContent(message.content);
+            const contents = GetQuoteInContent(allArgs);
 
-            if (contents === null)
+            if (contents === null || contents.length < 2)
                 return SendErrorMessage(message, command, "배열이 잘못됐습니다.");
 
             const random = mathjs.randomInt(0, contents.length);
@@ -331,9 +334,9 @@ client.on("message", async message => {
             if (!args[0])
                 return SendNeedSomeArgs(message, command, `"(멘션 | ID | 이름)" "[사유]"`);
 
-            const contents = GetQuoteInContent(message.content);
+            const contents = GetQuoteInContent(allArgs);
 
-            if (contents === null)
+            if (contents === null || contents.length < 2)
                 return SendErrorMessage(message, command, "배열이 잘못됐습니다.");
 
             const data = await GetDiscordUser(message, contents[0]);
@@ -352,9 +355,9 @@ client.on("message", async message => {
             if (!args[0])
                 return SendNeedSomeArgs(message, command, `"(멘션 | ID | 이름)" "[사유]"`);
 
-            const contents = GetQuoteInContent(message.content);
+            const contents = GetQuoteInContent(allArgs);
 
-            if (contents === null)
+            if (contents === null || contents.length < 2)
                 return SendErrorMessage(message, command, "배열이 잘못됐습니다.");
 
             const data = await GetDiscordUser(message, contents[0]);
