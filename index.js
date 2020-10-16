@@ -2,7 +2,8 @@ const Discord = require("discord.js");
 const {MessageEmbed} = require("discord.js");
 const client = new Discord.Client();
 
-const moment = require("moment").locale("ko");
+const moment = require("moment");
+moment.locale("ko");
 
 const request = require("request");
 const cheerio = require("cheerio");
@@ -10,6 +11,71 @@ const xml2js = require("xml2js");
 const math = require("math-expression-evaluator");
 
 const prefix = process.env.prefix;
+
+function CreateMessageEmbed(setFooter = true) {
+    const embed = new MessageEmbed()
+        .setColor("GREEN");
+
+    if (setFooter)
+        embed.setFooter("Made By green1052#2793", "https://cdn.discordapp.com/avatars/368688044934561792/638749733d2d73f23cf12db43e62d33a.webp?size=256");
+
+    return embed;
+}
+
+function SendErrorMessage(message, command, error) {
+    const embed = CreateMessageEmbed()
+        .setTitle(":warning: 오류!")
+        .setDescription(`오류가 발생해 명령어 ${command}이(가) 중단됐습니다. 원인: ${error}`);
+
+    message.channel.send(embed);
+
+    console.log(`오류가 발생해 명령어 ${command}이(가) 중단됐습니다. 원인: ${error}`);
+}
+
+function SendNeedSomeArgs(message, command, needArgs) {
+    const embed = CreateMessageEmbed()
+        .setTitle("인수가 부족합니다.")
+        .addField("사용법", `그린아 ${command} ${needArgs}`);
+
+    message.channel.send(embed);
+}
+
+function GetDiscordUser(message, allArgs) {
+    return new Promise(function (resolve, reject) {
+        if (message.mentions.users.first())
+            return resolve(message.mentions.users.first());
+
+        const tempAllArgs = allArgs.toLowerCase();
+
+        message.guild.members.fetch().then(members => {
+            members.forEach(member => {
+                if (member.user.id.includes(tempAllArgs) || member.user.username.toLowerCase().includes(tempAllArgs) || member.nickname !== null && member.nickname.toLowerCase().includes(tempAllArgs))
+                    return resolve(member);
+            });
+        }).finally(() => {
+            reject("유저를 찾지 못했습니다.");
+        });
+    });
+}
+
+function SendNekoImage(message, command) {
+    request({
+        url: "https://nekos.life/api/v2/img/neko",
+        headers: {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:81.0) Gecko/20100101 Firefox/81.0"
+        }
+    }, function (error, response, body) {
+        if (error)
+            return SendErrorMessage(message, command, error);
+
+        const json = JSON.parse(body);
+
+        const embed = CreateMessageEmbed()
+            .setImage(json.url);
+
+        message.channel.send(embed);
+    });
+}
 
 client.login(process.env.token);
 
@@ -31,71 +97,6 @@ client.on("message", message => {
 
     for (let i = 1; i < args.length; i++)
         allArgs += ` ${args[i]}`;
-
-    function CreateMessageEmbed(setFooter = true) {
-        const embed = new MessageEmbed()
-            .setColor("GREEN");
-
-        if (setFooter)
-            embed.setFooter("Made By green1052#2793", "https://cdn.discordapp.com/avatars/368688044934561792/638749733d2d73f23cf12db43e62d33a.webp?size=256");
-
-        return embed;
-    }
-
-    function SendErrorMessage(error) {
-        const embed = CreateMessageEmbed()
-            .setTitle(":warning: 오류!")
-            .setDescription(`오류가 발생해 명령어 ${command}이(가) 중단됐습니다. 원인: ${error}`);
-
-        message.channel.send(embed);
-
-        console.log(`오류가 발생해 명령어 ${command}이(가) 중단됐습니다. 원인: ${error}`);
-    }
-
-    function SendNeedSomeArgs(needArgs) {
-        const embed = CreateMessageEmbed()
-            .setTitle("인수가 부족합니다.")
-            .addField("사용법", `그린아 ${command} ${needArgs}`);
-
-        message.channel.send(embed);
-    }
-
-    function GetDiscordUser() {
-        return new Promise(function (resolve, reject) {
-            if (message.mentions.users.first())
-                return resolve(message.mentions.users.first());
-
-            let tempAllArgs = allArgs.toLowerCase();
-
-            message.guild.members.fetch().then(members => {
-                members.forEach(member => {
-                    if (member.user.id.includes(tempAllArgs) || member.user.username.toLowerCase().includes(tempAllArgs) || member.nickname !== null && member.nickname.toLowerCase().includes(tempAllArgs))
-                        return resolve(member);
-                });
-            }).finally(() => {
-                reject("유저를 찾지 못했습니다.");
-            });
-        });
-    }
-
-    function SendNekoImage() {
-        request({
-            url: "https://nekos.life/api/v2/img/neko",
-            headers: {
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:81.0) Gecko/20100101 Firefox/81.0"
-            }
-        }, function (error, response, body) {
-            if (error)
-                return SendErrorMessage(message, command, error);
-
-            const json = JSON.parse(body);
-
-            const embed = CreateMessageEmbed()
-                .setImage(json.url);
-
-            message.channel.send(embed);
-        });
-    }
 
     if (command === "도움말") {
         const embed = CreateMessageEmbed()
@@ -149,7 +150,7 @@ client.on("message", message => {
         if (!args[0])
             return SendNeedSomeArgs(message, command, "(멘션 | ID | 이름)");
 
-        GetDiscordUser(message, args).then(data => {
+        GetDiscordUser(message, allArgs).then(data => {
             const member = message.guild.member(data);
 
             const embed = CreateMessageEmbed()
@@ -205,7 +206,7 @@ client.on("message", message => {
             }
         }, function (error, response, body) {
             if (error)
-                return SendErrorMessage(message, command, error);
+                return SendErrorMessage(error);
 
             const json = JSON.parse(body);
 
@@ -217,7 +218,7 @@ client.on("message", message => {
         });
     } else if (command === "날씨") {
         if (!args[0])
-            return SendNeedSomeArgs(message, command, "(위치)");
+            return SendNeedSomeArgs("(위치)");
 
         request({
             url: `http://weather.service.msn.com/find.aspx?src=outlook&weadegreetype=C&culture=ko-KR&weasearchstr=${encodeURI(allArgs)}`,
@@ -272,12 +273,12 @@ client.on("message", message => {
                 return SendErrorMessage(message, command, "최대 10번만 반복할 수 있습니다.");
 
             for (let i = 0; i < num; i++) {
-                SendNekoImage();
+                SendNekoImage(message, command);
             }
 
             return;
         }
 
-        SendNekoImage();
+        SendNekoImage(message, command);
     }
 });
