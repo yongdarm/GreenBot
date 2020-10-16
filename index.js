@@ -9,9 +9,9 @@ const cheerio = require("cheerio");
 const xml2js = require("xml2js");
 const math = require("math-expression-evaluator");
 
-const prefix = process.env.PREFIX || "그린아 ";
+const prefix = process.env.prefix;
 
-client.login(process.env.TOKEN || "NzY1NDIyNzQ1NTcxMTY0MTc4.X4Ulew.U5aBkZ2UQIolYD0H97wnI4vMOz8");
+client.login(process.env.token);
 
 client.on("ready", () => {
     console.log(`${client.user.tag}이(가) 가동 됐습니다.`);
