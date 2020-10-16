@@ -52,16 +52,12 @@ async function GetDiscordUser(message, allArgs) {
 }
 
 async function SendNekoImage(message) {
-    try {
-        const response = await axios.get("https://nekos.life/api/v2/img/neko", {headers: {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:81.0) Gecko/20100101 Firefox/81.0"}})
+    const response = await axios.get("https://nekos.life/api/v2/img/neko", {headers: {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:81.0) Gecko/20100101 Firefox/81.0"}})
 
-        const embed = CreateMessageEmbed()
-            .setImage(response.data.url);
+    const embed = CreateMessageEmbed()
+        .setImage(response.data.url);
 
-        await message.channel.send(embed);
-    } catch (e) {
-        throw Error(e);
-    }
+    await message.channel.send(embed);
 }
 
 function GetQuoteInContent(content) {
