@@ -6,7 +6,7 @@ moment.locale("ko");
 
 const cheerio = require("cheerio");
 const xml2js = require("xml2js");
-const math = require("math-expression-evaluator");
+const mathjs = require("mathjs");
 const axios = require("axios");
 
 const prefix = process.env.prefix;
@@ -20,7 +20,7 @@ function CreateMessageEmbed() {
 async function SendErrorMessage(message, command, error) {
     const embed = CreateMessageEmbed()
         .setTitle(":warning: 오류!")
-        .setDescription(`오류가 발생해 명령어 ${command}이(가) 중단됐습니다. 사유: ${error}`);
+        .setDescription(`오류가 발생해 명령어 ${command}이(가) 중단됐습니다.\n사유: ${error}`);
 
     await message.channel.send(embed);
 
@@ -51,16 +51,16 @@ async function GetDiscordUser(message, allArgs) {
     throw Error("유저를 찾지 못했습니다.");
 }
 
-async function SendNekoImage(message, command) {
+async function SendNekoImage(message) {
     try {
-        const response = axios.get("https://nekos.life/api/v2/img/neko", {headers: {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:81.0) Gecko/20100101 Firefox/81.0"}})
+        const response = await axios.get("https://nekos.life/api/v2/img/neko", {headers: {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:81.0) Gecko/20100101 Firefox/81.0"}})
 
         const embed = CreateMessageEmbed()
             .setImage(response.data.url);
 
         await message.channel.send(embed);
     } catch (e) {
-        await SendErrorMessage(message, command, e);
+        throw Error(e);
     }
 }
 
@@ -141,7 +141,7 @@ client.on("message", async message => {
                 .addField("업타임", `${client.user.username}의 작동 시간을 볼 수 있습니다.`)
                 .addField("한강", "한강 물 온도를 볼 수 있습니다.")
                 .addField("날씨 (지역)", "날씨를 볼 수 있습니다.")
-                .addField("계산 (식)", "간단한 계산을 할 수 있습니다. [사용법](https://bugwheels94.github.io/math-expression-evaluator/#supported-maths-symbols)")
+                .addField("계산 (식)", "간단한 계산을 할 수 있습니다. [사용법](https://mathjs.org/docs/expressions/syntax.html)")
                 .addField("네코 [숫자]", "귀여운 고양이 소녀를 볼 수 있습니다.")
                 .addField(`골라 ("내용")`, "여러 단어 중 한개를 무작위로 골라줍니다.")
                 .addField(`추방 "(멘션 | ID | 이름)" "[사유]"`, "유저를 서버에서 추방할 수 있습니다.")
@@ -290,7 +290,7 @@ client.on("message", async message => {
 
             const embed = CreateMessageEmbed()
                 .setTitle("결과")
-                .setDescription(math.eval(allArgs));
+                .setDescription(mathjs.evaluate(allArgs));
 
             message.channel.send(embed);
         } else if (command === "네코") {
@@ -302,12 +302,12 @@ client.on("message", async message => {
                     return SendErrorMessage(message, command, "최대 5번만 반복할 수 있습니다.");
 
                 for (let i = 0; i < args[0]; i++)
-                    await SendNekoImage(message, command);
+                    await SendNekoImage(message);
 
                 return;
             }
 
-            await SendNekoImage(message, command);
+            await SendNekoImage(message);
         } else if (command === "골라") {
             if (!args[0] || !args[1])
                 return SendNeedSomeArgs(message, command, `"(단어)"`);
@@ -317,7 +317,7 @@ client.on("message", async message => {
             if (contents === null)
                 return SendErrorMessage(message, command, "배열이 잘못됐습니다.");
 
-            const random = Math.floor(Math.random() * contents.length);
+            const random = mathjs.randomInt(0, contents.length);
 
             const embed = CreateMessageEmbed()
                 .setTitle(`${random + 1}번을 선택했습니다.`)
@@ -345,7 +345,7 @@ client.on("message", async message => {
 
                 message.channel.send(embed);
             }).catch(error => {
-                SendErrorMessage(message, command, error.message);
+                SendErrorMessage(message, command, error);
             });
         } else if (command === "밴") {
             if (!message.guild.member(message.author).hasPermission("BAN_MEMBERS"))
@@ -367,7 +367,7 @@ client.on("message", async message => {
                     .setDescription(`사유: ${contents[1] === null ? contents[1] : "없음"}`);
 
                 message.channel.send(embed);
-            }).catch(error => SendErrorMessage(message, command, error.message));
+            }).catch(error => SendErrorMessage(message, command, error));
         } else if (command === "청소") {
             if (!args[0])
                 return SendNeedSomeArgs(message, command, "(수)");
@@ -389,7 +389,7 @@ client.on("message", async message => {
                     .setDescription(`${messages.size}개의 메시지를 지웠습니다.`);
 
                 message.channel.send(embed);
-            }).catch(error => SendErrorMessage(message, command, error.message));
+            }).catch(error => SendErrorMessage(message, command, error));
         }
     } catch (e) {
         await SendErrorMessage(message, command, e);
