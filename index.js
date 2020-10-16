@@ -383,13 +383,13 @@ client.on("message", async message => {
 
             await message.delete();
 
-            message.channel.bulkDelete(args[0]).then(messages => {
-                const embed = CreateMessageEmbed()
-                    .setTitle("삭제 완료")
-                    .setDescription(`${messages.size}개의 메시지를 지웠습니다.`);
+            const messages = await message.channel.bulkDelete(args[0]);
 
-                message.channel.send(embed);
-            }).catch(error => SendErrorMessage(message, command, error));
+            const embed = CreateMessageEmbed()
+                .setTitle("삭제 완료")
+                .setDescription(`${messages.size}개의 메시지를 지웠습니다.`);
+
+            await message.channel.send(embed).delete({ timeout: 5000 })
         }
     } catch (e) {
         await SendErrorMessage(message, command, e);
