@@ -15,11 +15,11 @@
   "author": "green1052",
   "license": "ISC",
   "dependencies": {
+    "axios": "^0.20.0",
     "cheerio": "^1.0.0-rc.3",
     "discord.js": "^12.3.1",
     "math-expression-evaluator": "^1.2.22",
     "moment": "^2.29.1",
-    "request": "^2.88.2",
     "xml2js": "^0.4.23"
   }
 }
