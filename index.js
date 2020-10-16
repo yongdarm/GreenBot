@@ -150,13 +150,13 @@ client.on("message", async message => {
 
             message.channel.send(embed);
         } else if (command === "핑") {
-            message.channel.send(CreateMessageEmbed().setTitle(":ping_pong: 핑!")).then(msg => {
-                const embed = CreateMessageEmbed()
-                    .setTitle(":ping_pong: 퐁!")
-                    .setDescription(`Message Latency: ${msg.createdTimestamp - message.createdTimestamp}ms\nAPI Latency: ${Math.round(client.ws.ping)}ms`);
+            const msg = await message.channel.send(CreateMessageEmbed().setTitle(":ping_pong: 핑!"));
 
-                msg.edit(embed);
-            });
+            const embed = CreateMessageEmbed()
+                .setTitle(":ping_pong: 퐁!")
+                .setDescription(`Message Latency: ${msg.createdTimestamp - message.createdTimestamp}ms\nAPI Latency: ${Math.round(client.ws.ping)}ms`);
+
+            await msg.edit(embed);
         } else if (command === "실검") {
             const response = await axios.get("https://datalab.naver.com/keyword/realtimeList.naver?age=all&where=main", {headers: {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:81.0) Gecko/20100101 Firefox/81.0"}});
 
@@ -338,15 +338,13 @@ client.on("message", async message => {
 
             const data = await GetDiscordUser(message, contents[0]);
 
-            data.kick(contents[1]).then(member => {
-                const embed = CreateMessageEmbed()
-                    .setTitle(`${member.user.tag}을(를) 성공적으로 추방 했습니다.`)
-                    .setDescription(`사유: ${contents[1] === null ? contents[1] : "없음"}`);
+            const member = await data.kick(contents[1]);
 
-                message.channel.send(embed);
-            }).catch(error => {
-                SendErrorMessage(message, command, error);
-            });
+            const embed = CreateMessageEmbed()
+                .setTitle(`${member.user.tag}을(를) 성공적으로 추방 했습니다.`)
+                .setDescription(`사유: ${contents[1] === null ? contents[1] : "없음"}`);
+
+            message.channel.send(embed);
         } else if (command === "밴") {
             if (!message.guild.member(message.author).hasPermission("BAN_MEMBERS"))
                 return SendErrorMessage(message, command, "권한이 부족합니다.");
@@ -361,13 +359,14 @@ client.on("message", async message => {
 
             const data = await GetDiscordUser(message, contents[0]);
 
-            data.ban(contents[1]).then(member => {
-                const embed = CreateMessageEmbed()
-                    .setTitle(`${member.user.tag}을(를) 성공적으로 밴 했습니다.`)
-                    .setDescription(`사유: ${contents[1] === null ? contents[1] : "없음"}`);
+            const member = await data.ban(contents[1]);
 
-                message.channel.send(embed);
-            }).catch(error => SendErrorMessage(message, command, error));
+            const embed = CreateMessageEmbed()
+                .setTitle(`${member.user.tag}을(를) 성공적으로 밴 했습니다.`)
+                .setDescription(`사유: ${contents[1] === null ? contents[1] : "없음"}`);
+
+            message.channel.send(embed);
+
         } else if (command === "청소") {
             if (!args[0])
                 return SendNeedSomeArgs(message, command, "(수)");
@@ -389,7 +388,7 @@ client.on("message", async message => {
                 .setTitle("삭제 완료")
                 .setDescription(`${messages.size}개의 메시지를 지웠습니다.`);
 
-            await message.channel.send(embed).delete({ timeout: 5000 })
+            await message.channel.send(embed).delete({timeout: 5000})
         }
     } catch (e) {
         await SendErrorMessage(message, command, e);
