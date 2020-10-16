@@ -64,21 +64,21 @@ async function SendNekoImage(message, command) {
     }
 }
 
-function GetQuoteInContent(content) {
-    let contents = [];
+function GetQuoteInContent(contents) {
+    let contentArr = [];
 
     let open = false;
     let string = "";
 
-    for (const i in content) {
-        if (content[i] === '"')
+    for (const content of contents) {
+        if (content === '"')
             open = !open;
 
-        if (open && content[i] !== '"')
-            string += content[i];
+        if (open && content !== '"')
+            string += content;
 
         else if (string !== "") {
-            contents.push(string);
+            contentArr.push(string);
             string = "";
         }
     }
@@ -86,7 +86,7 @@ function GetQuoteInContent(content) {
     if (open)
         return null;
 
-    return contents;
+    return contentArr;
 }
 
 async function GetGuildUserAndBotCount(guild) {
