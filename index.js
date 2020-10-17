@@ -43,12 +43,12 @@ async function GetDiscordUser(message, allArgs) {
 
     const members = await message.guild.members.fetch();
 
-    members.forEach(member => {
+    for (const member of members) {
         if (member.user.id.includes(tempAllArgs) || member.user.username.toLowerCase().includes(tempAllArgs) || member.nickname !== null && member.nickname.toLowerCase().includes(tempAllArgs))
-            return message.guild.member(member);
-    });
+            return await message.guild.member(member);
+    }
 
-    throw Error("유저를 찾지 못했습니다.");
+    throw "유저를 찾지 못했습니다.";
 }
 
 async function SendNekoImage(message) {
@@ -94,12 +94,12 @@ async function GetGuildUserAndBotCount(guild) {
 
     const members = await guild.members.fetch();
 
-    members.forEach(member => {
+    for (let member of members) {
         if (guild.member(member).user.bot)
             botCount++;
         else
             userCount++;
-    });
+    }
 
     return {userCount: userCount, botCount: botCount};
 }
@@ -176,14 +176,14 @@ client.on("message", async message => {
             let chatChanel = 0;
             let categoryChannel = 0;
 
-            message.guild.channels.cache.forEach(channel => {
+            for (const channel of message.guild.channels.cache) {
                 if (channel.type === "text")
                     chatChanel++;
                 else if (channel.type === "voice")
                     voiceChannel++;
                 else if (channel.type === "category")
                     categoryChannel++;
-            });
+            }
 
             const userAndBotCount = await GetGuildUserAndBotCount(message.guild);
 
@@ -258,8 +258,8 @@ client.on("message", async message => {
             const response = await axios.get("http://hangang.dkserver.wo.tc/", {headers: {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:81.0) Gecko/20100101 Firefox/81.0"}});
 
             const embed = CreateMessageEmbed()
-                .setTitle(`:man_playing_water_polo: ${moment(response.data.time).format("LLLL")} 기준 한강 물 온도`)
-                .setDescription(`${response.data.temp}°C`)
+                .setTitle(`:man_playing_water_polo: ${moment(response.data["time"]).format("LLLL")} 기준 한강 물 온도`)
+                .setDescription(`${response.data["temp"]}°C`)
 
             message.channel.send(embed);
         } else if (command === "날씨") {
@@ -267,20 +267,24 @@ client.on("message", async message => {
                 return SendNeedSomeArgs(message, command, "(위치)");
 
             const response = await axios.get(`http://weather.service.msn.com/find.aspx?src=outlook&weadegreetype=C&culture=ko-KR&weasearchstr=${encodeURI(allArgs)}`, {headers: {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:81.0) Gecko/20100101 Firefox/81.0"}});
+
+            if (response.data.includes("Weather-location lat/lon not found"))
+                return SendErrorMessage(message, command, "잘못된 지역");
+
             const result = await xml2js.parseStringPromise(response.data);
 
-            const weather = result.weatherdata.weather[0];
-            const current = weather.current[0].$;
+            const weather = result["weatherdata"]["weather"][0];
+            const current = weather["current"][0]["$"];
 
             const embed = CreateMessageEmbed()
-                .setThumbnail(`${weather.$.imagerelativeurl}law/${current.skycode}.gif`)
-                .setTitle(`${moment(`${current.date} ${current.observationtime}`).format("LLLL")} 기준 ${current.observationpoint} 날씨`)
-                .addField("현재 날씨", current.skytext, true)
-                .addField("온도", `${current.temperature}°C`, true)
-                .addField("체감 온도", `${current.feelslike}°C`, true)
-                .addField("습도", `${current.humidity}%`, true)
-                .addField("풍속", current.winddisplay, true)
-                .addField("자세히 보기", `[클릭](${weather.$.url})`, true);
+                .setThumbnail(`${weather["$"]["imagerelativeurl"]}law/${current["skycode"]}.gif`)
+                .setTitle(`${moment(`${current["date"]} ${current["observationtime"]}`).format("LLLL")} 기준 ${current["observationpoint"]} 날씨`)
+                .addField("현재 날씨", current["skytext"], true)
+                .addField("온도", `${current["temperature"]}°C`, true)
+                .addField("체감 온도", `${current["feelslike"]}°C`, true)
+                .addField("습도", `${current["humidity"]}%`, true)
+                .addField("풍속", current["winddisplay"], true)
+                .addField("자세히 보기", `[클릭](${weather["$"]["url"]})`, true);
 
             message.channel.send(embed);
         } else if (command === "계산") {
@@ -294,13 +298,15 @@ client.on("message", async message => {
             message.channel.send(embed);
         } else if (command === "네코") {
             if (args[0]) {
-                if (isNaN(args[0]))
+                const num = Number(args[0]);
+
+                if (isNaN(num))
                     return SendErrorMessage(message, command, "숫자가 아닙니다.");
 
-                if (args[0] > 5)
+                if (num > 5)
                     return SendErrorMessage(message, command, "최대 5번만 반복할 수 있습니다.");
 
-                for (let i = 0; i < args[0]; i++)
+                for (let i = 0; i < num; i++)
                     await SendNekoImage(message);
 
                 return;
@@ -373,21 +379,37 @@ client.on("message", async message => {
             if (!message.guild.member(message.author).hasPermission("MANAGE_MESSAGES"))
                 return SendErrorMessage(message, command, "권한이 부족합니다.");
 
-            if (isNaN(args[0]))
+            const num = Number(args[0]);
+
+            if (isNaN(num))
                 return SendErrorMessage(message, command, "숫자가 아닙니다.");
 
-            if (args[0] > 100)
+            if (num > 100)
                 return SendErrorMessage(message, command, "100 이하의 값을 입력 해주세요");
 
             await message.delete();
 
-            const messages = await message.channel.bulkDelete(args[0]);
+            const messages = await message.channel.bulkDelete(num);
 
             const embed = CreateMessageEmbed()
                 .setTitle("삭제 완료")
                 .setDescription(`${messages.size}개의 메시지를 지웠습니다.`);
 
             await message.channel.send(embed).delete({timeout: 5000})
+        } else if (command === "동전") {
+            if (!args[0])
+                return SendNeedSomeArgs(message, command, "(앞 | 뒤)");
+
+            const upDown = ['앞', '뒤'];
+            const random = mathjs.randomInt(0, upDown.length);
+
+            const isCorrect = upDown[random] === args[0];
+
+            const embed = CreateMessageEmbed()
+                .setTitle(`:coin: 동전이 ${upDown[random]}면으로 뒤집어졌습니다.`)
+                .setDescription(isCorrect ? "정답입니다." : "정답이 아닙니다.");
+
+            message.channel.send(embed);
         }
     } catch (e) {
         await SendErrorMessage(message, command, e);
